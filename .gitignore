@@ -1,0 +1,8 @@
+build
+work/tools/extras
+.env
+*.txt
+*.bat
+repos.sh
+docker-compose.override.yml
+.vscode

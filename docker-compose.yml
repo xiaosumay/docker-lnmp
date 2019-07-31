@@ -1,0 +1,102 @@
+version: '3.7'
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "10"
+
+services:
+  ### Nginx container ##########################################################
+  nginx:
+      image: ${DOCKER_LOCAL_SRC}xiaosumay/nginx-with-lua:1.16.0
+      ports:
+        - "${HTTP_PORT}:80"
+        - "443:443"
+      volumes:
+        - wwwroot:/var/www/html:ro
+        - ./work/nginx/entrypoint.conf:/etc/nginx/nginx.conf:ro
+        - ./work/nginx:/etc/nginx/conf.d:ro
+        - ./work/logs:/var/log/nginx:rw
+        - /etc/localtime:/etc/localtime:ro
+      restart: always
+      container_name: nginx
+      depends_on:
+        - mysql
+        - redis
+      logging: *default-logging
+
+
+  ### PHP-FPM container ########################################################
+  php-fpm:
+      image: ${DOCKER_LOCAL_SRC}xiaosumay/php7.3-fpm
+      volumes:
+        - wwwroot:/var/www/html:rw
+        - ./work/php/php.ini:/usr/local/etc/php/php.ini:ro
+        - ./work/php/php-fpm.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+        - ./work/logs:/var/log:rw
+        - /etc/localtime:/etc/localtime:ro
+      privileged: false
+      container_name: php-fpm
+      logging: *default-logging
+
+  ### Mysql container ##########################################################
+  mysql:
+      image: ${DOCKER_LOCAL_SRC}xiaosumay/mysql:5.7
+      ports:
+        - "127.0.0.1:3306:3306/tcp"
+      secrets:
+        - db_root_password
+        - db_password
+      volumes:
+        - mysqldata:/var/lib/mysql:rw
+        - ./work/mysql/mysql.cnf:/etc/mysql/my.cnf:ro
+        - ./work/logs:/var/log/mysql:rw
+        - /etc/localtime:/etc/localtime:ro
+      restart: always
+      container_name: mysql
+      environment:
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+        MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      logging: *default-logging
+
+  ### Redis container ##########################################################
+  redis:
+      image: ${DOCKER_LOCAL_SRC}xiaosumay/redis:5.0
+      entrypoint:
+        - redis-server
+        - /usr/local/etc/redis/redis.conf
+      volumes:
+        - ./work/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+        - ./work/logs:/var/log/redis:rw
+        - /etc/localtime:/etc/localtime:ro
+      restart: always
+      container_name: redis
+      logging: *default-logging
+
+  ### code-get container #######################################################
+  code-get:
+      image: ${DOCKER_LOCAL_SRC}xiaosumay/code-get:2.0
+      ports:
+        - "17293:17293/tcp"
+      volumes:
+        - ./work/github/repositories.conf:/etc/code-get/repositories.conf:ro
+        - ./work/github/keys:/var/www/.ssh:ro
+        - ./work/github/scripts:/var/www/.scripts:ro
+        - wwwroot:/var/www/html:rw
+        - /etc/localtime:/etc/localtime:ro
+      restart: always
+      container_name: code-get
+      logging: *default-logging
+
+volumes:
+  wwwroot:
+  mysqldata:
+
+secrets:
+  db_root_password:
+    file: ./db_root_password.txt
+  db_password:
+    file: ./db_${MYSQL_USER}_password.txt
