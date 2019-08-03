@@ -8,6 +8,7 @@ pushd $SCRIPT_PATH || exit 1
 #启用自建的一些方便函数
 . $SCRIPT_PATH/work/tools/functions.sh
 
+#判断是否有root的权限
 if ! HasRootPremission; then
     if IsCommandExists sudo; then
         sudo bash "$0"
@@ -17,6 +18,7 @@ if ! HasRootPremission; then
     fi
 fi
 
+#很重要，需要一些环境变量
 if ! IsFile .env; then
     cp .env.sample .env;
     ray_echo_Red "please modify .env first!";
@@ -25,35 +27,36 @@ fi
 
 #国内知名的仓库源
 mirrors=(
-        #阿里公网
-        mirrors.aliyun.com
         #阿里内网
         mirrors.cloud.aliyuncs.com
-        #腾讯公网
-        mirrors.tencentyun.com
-        #腾讯内网
-        mirrors.cloud.tencent.com
+        #阿里公网
+        mirrors.aliyun.com
     )
 
 #因为我司服务器都是在aliyun上，所以优先使用aliyun的内部网络
-mirrors_default=${mirrors[1]}
+for mirrors_ in "${mirrors[@]}"; do
+    if nc -z -w 1 $mirrors_ 80 1>&2 2>/dev/null; then
+        mirrors_default=$mirrors_
+    fi
+done
 
 if ! IsCommandExists docker; then
     if IsUbuntu; then
-        # cp /etc/apt/sources.list /etc/apt/sources.list.bak
-        if ! apt-key fingerprint 0EBFCD88 2>/dev/null | grep -q 'docker@docker.com'; then
-            apt-get update -y
-            apt-get remove docker docker-engine docker.io containerd runc -y
-            apt-get install apt-transport-https ca-certificates curl gnupg-agent \
-                software-properties-common -y
+        apt-get update -y
+        apt-get remove docker docker-engine docker.io containerd runc -y
+        apt-get install apt-transport-https ca-certificates curl gnupg-agent \
+            software-properties-common -y
 
-            curl -fsSL https://${mirrors[0]}/docker-ce/linux/ubuntu/gpg | apt-key add -
+        curl -fsSL https://${mirrors_default}/docker-ce/linux/ubuntu/gpg | apt-key add -
+
+        the_ppa="http://${mirrors_default}/docker-ce/linux/ubuntu"
+        if ! grep -q "^deb .*$the_ppa" /etc/apt/sources.list /etc/apt/sources.list.d/*; then
             add-apt-repository \
-            "deb [arch=amd64 trusted=yes] http://${mirrors_default}/docker-ce/linux/ubuntu $(lsb_release -cs)  stable"
+            "deb [arch=amd64 trusted=yes] $the_ppa $(lsb_release -cs)  stable"
         fi
 
-        InstallApps docker-ce docker-ce-cli containerd.io  mysql-client-core-5.7 jq git htop iftop
     elif IsRedHat; then
+        #centos7以上
         mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
         wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
         mv /etc/yum.repos.d/epel.repo /etc/yum.repos.d/epel.repo.backup
@@ -64,11 +67,12 @@ if ! IsCommandExists docker; then
             docker-latest docker-latest-logrotate docker-logrotate docker-engine -y
         yum install -y yum-utils device-mapper-persistent-data lvm2
         yum-config-manager --add-repo https://${mirrors_default}/docker-ce/linux/centos/docker-ce.repo
-
-        InstallApps docker-ce docker-ce-cli containerd.io  mysql-client-core-5.7 jq git htop iftop
     fi
 
+    InstallApps docker-ce docker-ce-cli containerd.io  mysql-client-core-5.7 jq git htop iftop
+
     if ! IsFile /usr/local/bin/docker-compose; then
+
         curl -fsSL https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) \
             -o /usr/local/bin/docker-compose  && chmod +x /usr/local/bin/docker-compose
 
