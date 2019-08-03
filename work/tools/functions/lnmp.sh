@@ -1,11 +1,10 @@
 function mkTemplateVHost() {
-
     local plugin=thinkphp
 
     if [[ "$4" = "yii" || "$4" = "yii2" ]]; then
         plugin=yii2
     else
-        plugin=$4
+        plugin=${4:-thinkphp}
     fi
 
     if ! IsEmpty $plugin; then
@@ -32,7 +31,7 @@ server {
     include conf.d/lua_core.conf;
     include conf.d/limits.conf;
 
-    listen $3;
+    listen ${3:-80};
     index index.html index.htm index.php;
     root /var/www/html/$2/public;
     server_name _;
@@ -84,7 +83,7 @@ function CountAccessIP() {
     fi
 
     if IsFile $LNMP_LOG_ROOT_PATH/access.$1.log; then
-        cat $LNMP_LOG_ROOT_PATH/access.$1.log | awk '{print  $1}' | sort | uniq -c | sort -rn | head -n ${2:-10}
+        cat $LNMP_LOG_ROOT_PATH/access.$1.log | jq ".realip" | sort | uniq -c | sort -rn | head -n ${2:-10}
     fi
 }
 
@@ -118,6 +117,11 @@ function VimVHost() {
     fi
 
     $RAY_SUDO $RAY_EDIT $vhost
+
+    if IsCommandExists nginx; then
+        nginx -t && nginx -s reload
+        return $?
+    fi
 
     return $RAY_RET_SUCCESS
 }

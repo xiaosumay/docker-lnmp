@@ -3,7 +3,7 @@ set -e
 
 SCRIPT="$(readlink -f "$0")"
 SCRIPT_PATH="$(dirname $SCRIPT)"
-pushd $SCRIPT_PATH || exit 1
+pushd $SCRIPT_PATH 1>&2 2>/dev/null || exit 1
 
 #启用自建的一些方便函数
 . $SCRIPT_PATH/work/tools/functions.sh
@@ -70,17 +70,18 @@ if ! IsCommandExists docker; then
     fi
 
     InstallApps docker-ce docker-ce-cli containerd.io  mysql-client-core-5.7 jq git htop iftop
+fi
 
-    if ! IsFile /usr/local/bin/docker-compose; then
 
-        curl -fsSL https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) \
-            -o /usr/local/bin/docker-compose  && chmod +x /usr/local/bin/docker-compose
+if ! IsFile /usr/local/bin/docker-compose; then
+    echo "正在下载docker-compose，很慢的，稍安勿躁……"
+    curl -fsSL https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) \
+        -o /usr/local/bin/docker-compose  && chmod +x /usr/local/bin/docker-compose
 
-        if ! IsSameStr "$(sha256sum /usr/local/bin/docker-compose | awk '{print $1 }')"  \
-                       "cfb3439956216b1248308141f7193776fcf4b9c9b49cbbe2fb07885678e2bb8a" ; then
-            ray_echo_Red "docker-compose 文件sha256不对"
-            exit 1
-        fi
+    if ! IsSameStr "$(sha256sum /usr/local/bin/docker-compose | awk '{print $1 }')"  \
+                    "cfb3439956216b1248308141f7193776fcf4b9c9b49cbbe2fb07885678e2bb8a" ; then
+        ray_echo_Red "docker-compose 文件sha256不对"
+        exit 1
     fi
 fi
 
@@ -134,4 +135,4 @@ docker-compose up -d
 
 rm -f "$SCRIPT"
 
-popd
+popd 1>&2 2>/dev/null

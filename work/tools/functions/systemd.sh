@@ -95,7 +95,7 @@ Requisite=docker.service
 
 [Service]
 WorkingDirectory=/opt/docker-lnmp
-ExecStart=/opt/docker-lnmp/php-cli-entrypoint.sh "$project_name" "$command_name" bash -c "$command_str"
+ExecStart=$LNMP_ROOT_PATH/php-cli-entrypoint.sh "$project_name" "$command_name" bash -c "$command_str"
 ExecStop=/bin/bash -c "/usr/bin/docker stop --time=1 $command_name || true"
 TimeoutStopSec=30s
 Type=$service_type
