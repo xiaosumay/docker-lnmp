@@ -131,6 +131,26 @@ find $SCRIPT_PATH -name "*.sh" -exec chmod 755 {} \;
 find $SCRIPT_PATH -type d  -exec chmod 755 {} \;
 chmod 777 work/logs
 
+Images=""
+
+if IsFile $Images; then
+    Images="docker-images.tar.gz"
+elif IsFile $Images; then
+   Images="$HOME/docker-images.tar.gz"
+fi
+
+if ! IsEmpty $Images; then
+    gzip -d "$Images"
+    docker load -i "${Images%.tar.gz}"
+
+    if ! IsEmpty $DOCKER_LOCAL_SRC; then
+        for image in "code-get:2.0" "php7.3-fpm" "php7.3-cli" \
+                     "nginx-with-lua:1.16.0" "redis:5.0" "mysql:5.7"; do
+            docker tag xiaosumay/$image  ${DOCKER_LOCAL_SRC}xiaosumay/$image
+        done
+    fi
+fi
+
 docker-compose up -d
 
 rm -f "$SCRIPT"
