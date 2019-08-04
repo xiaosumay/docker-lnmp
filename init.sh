@@ -24,6 +24,8 @@ if ! IsFile .env; then
     ray_echo_Red "please modify .env first!";
     exit 1
 fi
+ray_printStatusOk "导入.env环境变量"
+
 
 #国内知名的仓库源
 mirrors=(
@@ -40,6 +42,8 @@ for mirrors_ in "${mirrors[@]}"; do
     fi
 done
 
+ray_echo_Green "探测到仓库源 ${mirrors_default}"
+
 if ! IsCommandExists docker; then
     if IsUbuntu; then
         apt-get update -y
@@ -55,6 +59,7 @@ if ! IsCommandExists docker; then
             "deb [arch=amd64 trusted=yes] $the_ppa $(lsb_release -cs)  stable"
         fi
 
+        ray_printStatusOk "docker 仓库已更新"
     elif IsRedHat; then
         #centos7以上
         mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
@@ -67,15 +72,20 @@ if ! IsCommandExists docker; then
             docker-latest docker-latest-logrotate docker-logrotate docker-engine -y
         yum install -y yum-utils device-mapper-persistent-data lvm2
         yum-config-manager --add-repo https://${mirrors_default}/docker-ce/linux/centos/docker-ce.repo
+
+        ray_printStatusOk "docker 仓库已更新"
     fi
 
     InstallApps docker-ce docker-ce-cli containerd.io  mysql-client-core-5.7 jq git htop iftop
+
+    ray_printStatusOk "安装docker……"
 fi
 
 
+ray_echo_Green "检测docker-compose文件"
 if ! IsFile /usr/local/bin/docker-compose; then
-    echo "正在下载docker-compose，很慢的，稍安勿躁……"
-    curl -fsSL https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) \
+    ray_echo_Green "正在下载docker-compose，很慢的，稍安勿躁……"
+    curl -fSL https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) \
         -o /usr/local/bin/docker-compose  && chmod +x /usr/local/bin/docker-compose
 
     if ! IsSameStr "$(sha256sum /usr/local/bin/docker-compose | awk '{print $1 }')"  \
@@ -83,6 +93,8 @@ if ! IsFile /usr/local/bin/docker-compose; then
         ray_echo_Red "docker-compose 文件sha256不对"
         exit 1
     fi
+
+    ray_printStatusOk "安装docker-compose"
 fi
 
 #注入公用的docker-compose环境变量
@@ -91,8 +103,10 @@ fi
 
 if ! IsFileHasStr '#lnmp-tools' $HOME/.bashrc; then
     sed -i -e "\$a#lnmp-tools\n. $SCRIPT_PATH/work/tools/functions.sh\n" $HOME/.bashrc
+    ray_printStatusOk "安装基本快捷bash命令"
 fi
 
+#配置logrotate，每天切割日志
 if IsDir /etc/logrotate.d; then
     cat > /etc/logrotate.d/wwwlogs <<EOF
 $SCRIPT_PATH/work/logs/*.log {
@@ -110,27 +124,38 @@ $SCRIPT_PATH/work/logs/*.log {
 }
 EOF
     chmod 644 /etc/logrotate.d/wwwlogs
+    ray_printStatusOk "安装日志切割脚本"
 fi
 
+#删除可能存在的旧的的容器
 docker-compose down --rmi local 2>/dev/null || true
 
-if ! IsFile db_root_password.txt; then
+################################生成数据库的密码#################################
 
+if ! IsFile db_root_password.txt; then
     DB_ROOT_PASSWD="$(MakePassword)"
     DB_DEFAULT_PASSWD="$(MakePassword)"
-
+    #这个是数据库root的密码
     echo -n "$DB_ROOT_PASSWD" > db_root_password.txt
+    ray_printStatusOk "生成数据库root密码"
+    #这个是项目要用的数据库用户密码
     echo -n "$DB_DEFAULT_PASSWD" > db_${MYSQL_USER}_password.txt
+    ray_printStatusOk "生成数据库用户${MYSQL_USER}密码"
 
     chmod 400 db_root_password.txt
     chmod 444 db_${MYSQL_USER}_password.txt
 fi
 
+###############################恢复默认文件权限##################################
 find $SCRIPT_PATH -type f -exec chmod 644 {} \;
 find $SCRIPT_PATH -name "*.sh" -exec chmod 755 {} \;
 find $SCRIPT_PATH -type d  -exec chmod 755 {} \;
 chmod 777 work/logs
+ray_printStatusOk "恢复默认文件权限"
 
+###########################从本地添加docker-images###############################
+
+#把文件docker-images.tar.gz放在/opt/docker-lnmp目录下
 Images=""
 
 if IsFile $Images; then
@@ -140,6 +165,7 @@ elif IsFile $Images; then
 fi
 
 if ! IsEmpty $Images; then
+    ray_echo_Green "正在使用本地docker-images"
     gzip -d "$Images"
     docker load -i "${Images%.tar.gz}"
 
@@ -149,10 +175,16 @@ if ! IsEmpty $Images; then
             docker tag xiaosumay/$image  ${DOCKER_LOCAL_SRC}xiaosumay/$image
         done
     fi
+    ray_printStatusOk "安装lnmp成功"
 fi
+################################################################################
+
+ray_echo_Green "正在启动服务"
 
 docker-compose up -d
 
 rm -f "$SCRIPT"
 
 popd 1>&2 2>/dev/null
+
+ray_printStatusOk "docker-lnmp 安装……"
