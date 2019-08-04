@@ -20,7 +20,7 @@ function clearBrokenLinks() {
         return $RAY_RET_SUCCESS
     fi
 
-    for line in `find /etc/systemd/system -type l -print0 | xargs -n 1 file \
+    for line in `find /etc/systemd/system -type l -print0 | xargs -n1 --null file \
                         | grep 'broken symbolic link' | awk  -F':' '{print $1}'`; do
         $RAY_SUDO rm -f $line
     done
