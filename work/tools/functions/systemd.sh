@@ -81,10 +81,12 @@ function MakeService() {
     local service_type="simple"
     local service_restart="Restart=always"
     local command_str="while true; do php think $command_name; sleep $interval; done"
+    local autorun=true
     if IsEmpty "$interval"; then
         service_type="oneshot"
         service_restart=""
         command_str="php think $command_name;"
+        autorun=false
     fi
 
     cat > $command_name.service <<EOF
@@ -104,12 +106,19 @@ $service_restart
 [Install]
 WantedBy=multi-user.target
 EOF
+
+    if $autorun; then
+        SystemdEnable $command_name.service
+        ss $command_name.service
+
+        ray_printStatusOk "$command_name 服务创建并启用"
+    fi
 }
 
 function MakeTimer() {
     if IsSameStr "$1" "--help"; then
         echo "uesage: MakeTimer <project-name> <command-name> <calendar>"
-        echo "        MakeTimer bankpay HeardBeatLine 00:03:00"
+        echo "        MakeTimer bankpay HeardBeatLine \"00:03:00\""
     fi
     local project_name="$1"
 
@@ -142,4 +151,9 @@ WantedBy=timers.target
 EOF
 
     MakeService "$project_name" "$command_name"
+
+    SystemdEnable $command_name.timer
+    ss $command_name.timer
+
+    ray_printStatusOk "command_name 定时器创建并启用"
 }

@@ -46,9 +46,7 @@ else
 fi
 
 function cleanup() {
-    if docker ps -a | grep -qP '(?<=php7.3-cli).*?'"${project_name}"; then
-        docker container stop --time=1 ${project_name} || true
-    fi
+    docker container stop --time=1 ${project_name} || true
 }
 
 #注册退出清理工作

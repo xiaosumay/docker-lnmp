@@ -1,5 +1,5 @@
 function docker-lnmp-help() {
-cat <<EOF
+cat | less <<EOF
 常用操作命令说明书
 
 wwwlogs     去往日志目录
@@ -50,4 +50,5 @@ git-log     查看项目git日志
             用法：git-log <项目名>
             例如：git-log default
 EOF
+
 }

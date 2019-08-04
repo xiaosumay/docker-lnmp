@@ -126,10 +126,10 @@ function git-log() {
     local project_path="$(basename "$1")"
 
     if pushd /var/lib/docker/volumes/${COMPOSE_PROJECT_NAME}_wwwroot/_data/$project_path 1>&2 2>/dev/null; then
-        git log
+        [[ -d ".git" ]] && git log
         popd
     elif pushd $LNMP_ROOT_PATH/work/wwwroot/$project_path 1>&2 2>/dev/null; then
-        git log
+        [[ -d ".git" ]] && git log
         popd
     fi
 }

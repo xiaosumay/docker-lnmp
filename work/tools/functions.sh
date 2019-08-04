@@ -41,3 +41,11 @@ function ShowFunctions() {
         echo -en "\n"
     done
 }
+
+function clearup_docker() {
+    for name in `$RAY_SUDO docker container ls --format '{{json .Names}}' | tr -d '"' | grep "^oneshot_"`; do
+        $RAY_SUDO docker container stop --time=1 $name || true
+    done
+}
+
+trap clearup_docker EXIT
