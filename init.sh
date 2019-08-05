@@ -24,8 +24,9 @@ if ! IsFile .env; then
     ray_echo_Red "please modify .env first!";
     exit 1
 fi
-ray_printStatusOk "导入.env环境变量"
 
+. .env
+ray_printStatusOk "导入.env环境变量"
 
 #国内知名的仓库源
 mirrors=(
