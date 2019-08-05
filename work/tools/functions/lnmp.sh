@@ -41,22 +41,7 @@ server {
     expires \$expires;
 
     # location / {
-    #    proxy_set_header Host               \$host:\$server_port;
-    #    proxy_set_header X-Real-IP          \$remote_addr;
-    #    proxy_set_header X-Forwarded-For    \$proxy_add_x_forwarded_for;
-    #    proxy_set_header Connection         "";
-    #    proxy_set_header Referer            \$uri;
-
-    #    proxy_http_version 1.1;
-    #    proxy_redect off;
-
-    #    proxy_hide_header Cache-Control;
-    #    proxy_hide_header Expires;
-    #    proxy_hide_header X-Accel-Expires;
-    #    proxy_ignore_headers Cache-Control;
-    #    proxy_ignore_headers Expires;
-    #    proxy_ignore_headers X-Accel-Expires;
-
+    #    include conf.d/proxy.conf;
     #    proxy_pass http://gunicorn_backend;
     #}
 
@@ -68,8 +53,8 @@ server {
         include conf.d/lua/must_be_human.conf;
     }
 
-    access_log  /var/log/nginx/access.$2.log json_log buffer=8k flush=10s if=\$loggable;
-    error_log   /var/log/nginx/error.$2.log  warn;
+    access_log  /var/log/nginx/access.${2:-default}.log json_log buffer=8k flush=10s if=\$loggable;
+    error_log   /var/log/nginx/error.${2:-default}.log  warn;
 }
 EOF
     $RAY_SUDO chmod 644 $1

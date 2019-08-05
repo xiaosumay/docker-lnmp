@@ -21,10 +21,8 @@ services:
         - /etc/localtime:/etc/localtime:ro
       restart: always
       container_name: nginx
-      depends_on:
-        - mysql
-        - redis
       logging: *default-logging
+      network_mode: host
 
 
   ### PHP-FPM container ########################################################
@@ -39,6 +37,7 @@ services:
       privileged: false
       container_name: php-fpm
       logging: *default-logging
+      network_mode: host
 
   ### Mysql container ##########################################################
   mysql:
@@ -61,6 +60,7 @@ services:
         MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
         MYSQL_PASSWORD_FILE: /run/secrets/db_password
       logging: *default-logging
+      network_mode: host
 
   ### Redis container ##########################################################
   redis:
@@ -75,6 +75,7 @@ services:
       restart: always
       container_name: redis
       logging: *default-logging
+      network_mode: host
 
   ### code-get container #######################################################
   code-get:
@@ -90,6 +91,7 @@ services:
       restart: always
       container_name: code-get
       logging: *default-logging
+      network_mode: host
 
 volumes:
   wwwroot:

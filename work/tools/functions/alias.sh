@@ -12,9 +12,9 @@ function nginx-reload() {
 
 function lnmctl() {
     if IsCommandExists docker-compose; then
-        pushd $LNMP_ROOT_PATH || return
+        pushd $LNMP_ROOT_PATH 1>&2 2>/dev/null || return
         docker-compose "$@"
-        popd || return
+        popd  1>&2 2>/dev/null || return
     else
         ray_echo_Red "do nothing..."
     fi
@@ -27,6 +27,10 @@ function code-get() {
 }
 
 function wwwroot() {
+    if [[ ! -x $LNMP_ROOT_PATH/php-cli-entrypoint.sh ]]; then
+        $RAY_SUDO chmod +x $LNMP_ROOT_PATH/php-cli-entrypoint.sh
+    fi
+
     $LNMP_ROOT_PATH/php-cli-entrypoint.sh "$@"
 }
 
@@ -49,67 +53,80 @@ function docker-lnmp() {
 }
 
 function ss() {
-    local SERVICE=$(basename $1)
+    for service_ in "$@"; do
+        local SERVICE=$(basename $service_)
 
-    if IsCommandExists systemctl; then
-        $RAY_SUDO systemctl start "$SERVICE" || return 1
-    else
-        $RAY_SUDO service "$SERVICE" start || return 1
-    fi
+        if IsCommandExists systemctl; then
+            $RAY_SUDO systemctl start "$SERVICE" || return 1
+        else
+            $RAY_SUDO service "$SERVICE" start || return 1
+        fi
+    done
 }
 
 function sl() {
     if IsCommandExists systemctl; then
         $RAY_SUDO systemctl daemon-reload
-        if [ $# -gt 0 ]; then
-            local SERVICE=$(basename $1)
-            $RAY_SUDO systemctl reload "$SERVICE" || return 1
-        fi
-    else
-        local SERVICE=$(basename $1)
-        $RAY_SUDO service "$SERVICE" reload || return 1
     fi
+
+    for service_ in "$@"; do
+        local SERVICE=$(basename $service_)
+        if IsCommandExists systemctl; then
+            $RAY_SUDO systemctl reload "$SERVICE" || return 1
+        else
+            $RAY_SUDO service "$SERVICE" reload || return 1
+        fi
+    done
 }
 
 function sr() {
     if IsCommandExists systemctl; then
         $RAY_SUDO systemctl daemon-reload
-        if [ $# -gt 0 ]; then
-            local SERVICE=$(basename $1)
-            $RAY_SUDO systemctl restart "$SERVICE" || return 1
-        fi
-    else
-        local SERVICE=$(basename $1)
-        $RAY_SUDO service "$SERVICE" restart || return 1
     fi
+
+    for service_ in "$@"; do
+        local SERVICE=$(basename $service_)
+        if IsCommandExists systemctl; then
+            $RAY_SUDO systemctl restart "$SERVICE" || return 1
+        else
+            $RAY_SUDO service "$SERVICE" restart || return 1
+        fi
+    done
 }
 
 function sp() {
-    local SERVICE=$(basename $1)
+    for service_ in "$@"; do
+        local SERVICE=$(basename $service_)
 
-    if IsCommandExists systemctl; then
-        $RAY_SUDO systemctl stop "$SERVICE" || return 1
-    else
-        $RAY_SUDO service "$SERVICE" stop || return 1
-    fi
+        if IsCommandExists systemctl; then
+            $RAY_SUDO systemctl stop "$SERVICE" || return 1
+        else
+            $RAY_SUDO service "$SERVICE" stop || return 1
+        fi
+    done
 }
 
 function st() {
-    local SERVICE=$(basename $1)
+    for service_ in "$@"; do
+        local SERVICE=$(basename $service_)
 
-    if IsCommandExists systemctl; then
-        $RAY_SUDO systemctl status "$SERVICE" || return 1
-    else
-        $RAY_SUDO service "$SERVICE" status || return 1
-    fi
+        if IsCommandExists systemctl; then
+            $RAY_SUDO systemctl status "$SERVICE" || return 1
+        else
+            $RAY_SUDO service "$SERVICE" status || return 1
+        fi
+    done
 }
 
 function jo() {
-    local SERVICE=$(basename $1)
+    for service_ in "$@"; do
+        local SERVICE=$(basename $service_)
 
-    if IsCommandExists journalctl; then
-        $RAY_SUDO journalctl -n30 -f -u "$SERVICE" || return 1
-    fi
+        if IsCommandExists journalctl; then
+            $RAY_SUDO journalctl -n30 -f -u "$SERVICE" || return 1
+        fi
+        break
+    done
 }
 
 alias ll="ls -laFh"

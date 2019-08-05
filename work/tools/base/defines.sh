@@ -22,5 +22,5 @@ if [ -z "$LNMP_LOG_ROOT_PATH" ]; then
 fi
 
 if [ -z "$LNMP_ROOT_PATH" ]; then
-    export LNMP_ROOT_PATH=$LNMP_WORK_FILE_PATH/../
+    export LNMP_ROOT_PATH=$(readlink -f $LNMP_WORK_FILE_PATH/../)
 fi

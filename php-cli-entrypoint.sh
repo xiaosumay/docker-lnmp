@@ -38,14 +38,8 @@ fi
 
 . $SCRIPT_PATH/.env
 
-if docker network ls | grep -q ${COMPOSE_PROJECT_NAME}_default; then
-    NETWORK=${COMPOSE_PROJECT_NAME}_default
-else
-    NETWORK=bridge
-fi
-
 function cleanup() {
-    docker container stop --time=1 ${project_name} || true
+    docker container stop --time=1 ${project_name} 1>&2 2>/dev/null || true
 }
 
 #注册退出清理工作
@@ -59,7 +53,7 @@ docker run $IT --rm \
     -w /var/www/html/$dir_name \
     --dns 114.114.114.114 --dns 8.8.8.8 --dns 8.8.4.4 \
     --user 1000:999 \
-    --network $NETWORK \
+    --network host \
     --name ${project_name} \
     ${DOCKER_LOCAL_SRC}xiaosumay/php7.3-cli \
     ${COMMAND:-"$@"}
