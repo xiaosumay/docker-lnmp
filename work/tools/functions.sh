@@ -3,13 +3,30 @@
 export RAY_SCRIP_FILE_PATH="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 export LNMP_WORK_FILE_PATH=$(readlink -f $RAY_SCRIP_FILE_PATH/../)
 
-if [[ -f $LNMP_ROOT_PATH/.env ]]; then
-    . $LNMP_ROOT_PATH/.env || true
-fi
+export __exit_trap_command=""
+function __cleanup {
+    eval "$__exit_trap_command"
+}
+
+trap __cleanup EXIT
+
+function add_exit_trap {
+    local to_add="$*"
+
+    if [[ -z "$__exit_trap_command" ]]; then
+        __exit_trap_command="$to_add"
+    else
+        __exit_trap_command="$__exit_trap_command; $to_add"
+    fi
+}
 
 for file in `find $RAY_SCRIP_FILE_PATH  -mindepth 2 -not -regex ".*/extras/.*?$" -a -name "*.sh"`; do
     . $file
 done
+
+if [[ -f $LNMP_ROOT_PATH/.env ]]; then
+    . $LNMP_ROOT_PATH/.env || true
+fi
 
 function ShowFunctions() {
     local width=`tput cols`
@@ -48,4 +65,4 @@ function clearup_docker() {
     done
 }
 
-trap clearup_docker EXIT
+add_exit_trap clearup_docker

@@ -28,8 +28,7 @@ EOF
     exit 0
 fi
 
-project_name=${1:-$(head /dev/urandom | tr -dc 'a-zA-Z' | fold -w ${1:-10} | head -n 1)}
-project_name="oneshot_${project_name}"
+project_name=${1:-"oneshot_$(head /dev/urandom | tr -dc 'a-zA-Z' | fold -w 10 | head -n 1)"}
 shift || true
 
 if [[ $# -eq 0 ]]; then
