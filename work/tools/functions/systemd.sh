@@ -109,9 +109,11 @@ EOF
 
     if $autorun; then
         SystemdEnable $command_name.service
-        ss $command_name.service
-
-        ray_printStatusOk "$command_name 服务创建并启用"
+        if ss $command_name.service; then
+            ray_printStatusOk "$command_name 服务创建并启用"
+        else
+            ray_printStatusFailed "$command_name 服务创建并启用"
+        fi
     fi
 }
 
@@ -152,8 +154,11 @@ EOF
 
     MakeService "$project_name" "$command_name"
 
-    SystemdEnable $command_name.timer
-    ss $command_name.timer
+    SystemdEnable $command_name.service $command_name.timer
 
-    ray_printStatusOk "command_name 定时器创建并启用"
+    if ss $command_name.timer; then
+        ray_printStatusOk "$command_name 定时器创建并启用"
+    else
+        ray_printStatusFailed "$command_name 定时器创建并启用"
+    fi
 }
