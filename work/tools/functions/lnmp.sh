@@ -104,8 +104,15 @@ function VimVHost() {
     $RAY_SUDO $RAY_EDIT $vhost
 
     if IsCommandExists nginx; then
-        nginx -t && nginx -s reload
-        return $?
+        local confirm
+        read -r -p "reload nginx conf ? [Y/n]:" confirm
+
+        case $confirm in
+            Y|y)
+                nginx -t && nginx -s reload
+            ;;
+            * ) return $RAY_RET_SUCCESS ;;
+        esac
     fi
 
     return $RAY_RET_SUCCESS
