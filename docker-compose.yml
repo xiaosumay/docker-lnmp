@@ -15,8 +15,8 @@ services:
       - "443:443"
     volumes:
       - wwwroot:/var/www/html:ro
-      - ./work/nginx/entrypoint.conf:/etc/nginx/nginx.conf:ro
-      - ./work/nginx:/etc/nginx/conf.d:ro
+      - ./work/nginx/entrypoint.conf:/etc/nginx/nginx.conf:rw
+      - ./work/nginx:/etc/nginx/conf.d:rw
       - ./work/logs:/var/log/nginx:rw
       - /etc/localtime:/etc/localtime:ro
       - letsencrypt_etc:/etc/letsencrypt:rw
