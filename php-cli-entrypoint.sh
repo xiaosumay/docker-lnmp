@@ -28,7 +28,7 @@ EOF
     exit 0
 fi
 
-project_name=${1:-"oneshot_$(head /dev/urandom | tr -dc 'a-zA-Z' | fold -w 10 | head -n 1)"}
+project_name=${1:-"oneshot_${SSH_BASH_PID}_$(head /dev/urandom | tr -dc 'a-zA-Z' | fold -w 10 | head -n 1)"}
 shift || true
 
 if [[ $# -eq 0 ]]; then

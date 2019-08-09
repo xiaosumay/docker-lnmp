@@ -12,9 +12,9 @@ function nginx-reload() {
 
 function lnmctl() {
     if IsCommandExists docker-compose; then
-        pushd $LNMP_ROOT_PATH 1>&2 2>/dev/null || return
+        pushd $LNMP_ROOT_PATH 1>/dev/null 2>/dev/null || return
         docker-compose "$@"
-        popd  1>&2 2>/dev/null || return
+        popd  1>/dev/null 2>/dev/null || return
     else
         ray_echo_Red "do nothing..."
     fi
@@ -142,13 +142,19 @@ function pause() {
 function git-log() {
     local project_path="$(basename "$1")"
 
-    if pushd /var/lib/docker/volumes/${COMPOSE_PROJECT_NAME}_wwwroot/_data/$project_path 1>&2 2>/dev/null; then
+    if pushd /var/lib/docker/volumes/${COMPOSE_PROJECT_NAME}_wwwroot/_data/$project_path 1>/dev/null 2>/dev/null; then
         [[ -d ".git" ]] && git log
         popd
-    elif pushd $LNMP_ROOT_PATH/work/wwwroot/$project_path 1>&2 2>/dev/null; then
+    elif pushd $LNMP_ROOT_PATH/work/wwwroot/$project_path 1>/dev/null 2>/dev/null; then
         [[ -d ".git" ]] && git log
         popd
     fi
+}
+
+function clean-docker-log {
+    for name in `docker container ls --format "{{json .Names}}" | tr -d '"'`; do
+        $RAY_SUDO docker inspect $name -f "{{.LogPath}}" | xargs -n1 truncate -s 0;
+    done
 }
 
 alias JQ_MATCH_4XX="jq 'select(.status | match(\"4..\")) | .'"

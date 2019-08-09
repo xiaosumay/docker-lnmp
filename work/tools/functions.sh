@@ -2,6 +2,7 @@
 
 export RAY_SCRIP_FILE_PATH="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 export LNMP_WORK_FILE_PATH=$(readlink -f $RAY_SCRIP_FILE_PATH/../)
+export SSH_BASH_PID=$$
 
 export __exit_trap_command=""
 function __cleanup {
@@ -60,7 +61,7 @@ function ShowFunctions() {
 }
 
 function clearup_docker() {
-    for name in `$RAY_SUDO docker container ls --format '{{json .Names}}' | tr -d '"' | grep "^oneshot_"`; do
+    for name in `$RAY_SUDO docker container ls --format '{{json .Names}}' | tr -d '"' | grep "^oneshot_${SSH_BASH_PID}_"`; do
         $RAY_SUDO docker container stop --time=1 $name 2>/dev/null || true
     done
 }
