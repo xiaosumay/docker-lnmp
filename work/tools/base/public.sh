@@ -32,7 +32,7 @@ function HasRootPremission() {
 }
 
 if ! HasRootPremission; then
-    RAY_SUDO=sudo
+    export RAY_SUDO=sudo
 fi
 
 #######################################
@@ -57,11 +57,11 @@ function IsCommandExists() {
 }
 
 if IsCommandExists vim; then
-    RAY_EDIT=vim
-    elif IsCommandExists vi; then
-    RAY_EDIT=vi
-    elif IsCommandExists nano; then
-    RAY_EDIT=nano
+    export RAY_EDIT=vim
+elif IsCommandExists vi; then
+    export RAY_EDIT=vi
+elif IsCommandExists nano; then
+    export RAY_EDIT=nano
 fi
 
 function IsDir() {
