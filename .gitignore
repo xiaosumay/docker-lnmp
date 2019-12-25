@@ -3,6 +3,8 @@ work/tools/extras
 .env
 *.txt
 *.bat
+*.log
+*.db
 repos.sh
 docker-compose.override.yml
 .vscode
