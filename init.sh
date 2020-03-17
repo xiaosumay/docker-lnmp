@@ -19,13 +19,13 @@ if ! HasRootPremission; then
 fi
 
 #很重要，需要一些环境变量
-if ! IsFile .env; then
-    cp .env.sample .env;
-    ray_echo_Red "please modify .env first!";
+if ! IsFile ${SCRIPT_PATH}/.env; then
+    cp ${SCRIPT_PATH}/.env.sample ${SCRIPT_PATH}/.env;
+    ray_echo_Red "please modify ${SCRIPT_PATH}/.env first!";
     exit 1
 fi
 
-. .env
+. ${SCRIPT_PATH}/.env
 ray_printStatusOk "导入.env环境变量"
 
 #国内知名的仓库源
@@ -79,14 +79,19 @@ if ! IsCommandExists docker; then
 
     InstallApps docker-ce docker-ce-cli containerd.io  mysql-client-core-5.7 jq git htop iftop
 
-    ray_printStatusOk "安装docker……"
+    if IsCommandExists docker; then
+        ray_printStatusOk "安装docker……"
+    else
+        ray_printStatusFailed "安装docker……"
+        exit 1
+    fi
 fi
 
 
 ray_echo_Green "检测docker-compose文件"
 if ! IsFile /usr/local/bin/docker-compose; then
     ray_echo_Green "正在下载docker-compose，很慢的，稍安勿躁……"
-    curl -fSL https://get.daocloud.io/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m) \
+    curl -fSL https://get.daocloud.io/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m) \
         -o /usr/local/bin/docker-compose  && chmod +x /usr/local/bin/docker-compose
 
     if ! IsSameStr "$(sha256sum /usr/local/bin/docker-compose | awk '{print $1 }')"  \
@@ -95,11 +100,16 @@ if ! IsFile /usr/local/bin/docker-compose; then
         exit 1
     fi
 
-    ray_printStatusOk "安装docker-compose"
+    if IsCommandExists docker-compose; then
+        ray_printStatusOk "安装docker-compose"
+    else
+        ray_printStatusFailed "安装docker-compose"
+        exit 1
+    fi
 fi
 
 #注入公用的docker-compose环境变量
-. .env
+. ${SCRIPT_PATH}/.env
 
 
 if ! IsFileHasStr '#lnmp-tools' $HOME/.bashrc; then
@@ -159,9 +169,9 @@ ray_printStatusOk "恢复默认文件权限"
 #把文件docker-images.tar.gz放在/opt/docker-lnmp目录下
 Images=""
 
-if IsFile $Images; then
+if ! IsFile $Images; then
     Images="docker-images.tar.gz"
-elif IsFile $Images; then
+elif ! IsFile $Images; then
    Images="$HOME/docker-images.tar.gz"
 fi
 

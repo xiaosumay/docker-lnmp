@@ -144,3 +144,11 @@ function IsFileHasStr() {
 
     return $RAY_RET_FAILED
 }
+
+function isNumber() {
+    if ! [[ $1 =~ ^[0-9]+$ ]] ; then
+        return $RAY_RET_FAILED
+    fi
+
+    return $RAY_RET_SUCCESS
+}
